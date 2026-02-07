@@ -53,6 +53,31 @@ int main() {
         res.set_content(response.dump(2), "application/json");
     });
 
+    // POST /wallet/sub endpoint
+    srv.Post("/wallet/sub", [](const httplib::Request &req, httplib::Response & res) {
+        std::cout << "POST /wallet/sub" << std::endl;
+
+        json req_data = json::parse(req.body);
+        
+        // TODO: check parsing errors
+        // TODO: check if the fields exist
+
+        std::string currency = req_data["currency"];
+        double amount = req_data["amount"];
+
+        // TODO: check if amount is positive
+
+        wallet[currency] -= amount;
+
+        json response;
+        response["message"] = "Currency subsracted";
+        response["currency"] = currency;
+        response["amount"] = amount;
+        response["total"] = wallet[currency];
+
+        res.set_content(response.dump(2), "application/json");
+    });
+
     
     // Start server
     std::cout << "Server listening on port 8080" << std::endl;

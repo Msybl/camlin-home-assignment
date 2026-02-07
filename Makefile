@@ -32,6 +32,14 @@ test: $(TARGET)
 	-H "Content-Type: application/json" \
 	-d '{"currency":"EUR","amount":75}'
 	@echo ""
+	@curl -X POST http://localhost:8080/wallet/add \
+	-H "Content-Type: application/json" \
+	-d '{"currency":"USD","amount":100}'
+	@echo ""
+	@curl -X POST http://localhost:8080/wallet/sub \
+	-H "Content-Type: application/json" \
+	-d '{"currency":"USD","amount":30}'
+	@echo ""
 	@echo "Stopping server..."
 	@kill `cat .server.pid` 2>/dev/null || true
 	@rm -f .server.pid

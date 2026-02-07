@@ -1,6 +1,5 @@
 # compiled binary
 wallet_api
-test_json
 
 # temporary
 .server.pid
