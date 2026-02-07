@@ -1,0 +1,5 @@
+# compiled binary
+wallet_api
+
+# temporary
+.server.pid
