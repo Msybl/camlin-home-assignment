@@ -20,8 +20,13 @@ test: $(TARGET)
 	@echo "Starting server..."
 	@./$(TARGET) & echo $$! > .server.pid
 	@sleep 1
-	@echo "Testing endpoint..."
-	@curl -s http://localhost:8080/hi || true
+	@echo "Testing endpoints..."
+	@curl -s http://localhost:8080/health || true
+	@echo ""
+	@curl -s http://localhost:8080/ || true
+	@echo ""
+	@echo "GET /nonexistent (404):"
+	@curl -s http://localhost:8080/nonexistent || true
 	@echo ""
 	@echo "Stopping server..."
 	@kill `cat .server.pid` 2>/dev/null || true
