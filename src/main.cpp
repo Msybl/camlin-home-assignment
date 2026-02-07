@@ -78,6 +78,24 @@ int main() {
         res.set_content(response.dump(2), "application/json");
     });
 
+    // GET /wallet endpoint
+    srv.Get("/wallet", [](const httplib::Request &, httplib::Response &res) {
+        std::cout << "GET /wallet" << std::endl;
+        
+        json wallet_array = json::array();
+
+        for(auto &[currency, amount] : wallet) {
+            json item;
+            item["currency"] = currency;
+            item["amount"] = amount;
+            wallet_array.push_back(item);
+        }
+
+        json response;
+        response["wallet"] = wallet_array;
+        res.set_content(response.dump(2), "application/json");
+    });
+
     
     // Start server
     std::cout << "Server listening on port 8080" << std::endl;
