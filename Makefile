@@ -28,6 +28,10 @@ test: $(TARGET)
 	@echo "GET /nonexistent (404):"
 	@curl -s http://localhost:8080/nonexistent || true
 	@echo ""
+	@curl -X POST http://localhost:8080/wallet/add \
+	-H "Content-Type: application/json" \
+	-d '{"currency":"EUR","amount":75}'
+	@echo ""
 	@echo "Stopping server..."
 	@kill `cat .server.pid` 2>/dev/null || true
 	@rm -f .server.pid
