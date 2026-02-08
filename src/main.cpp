@@ -14,17 +14,7 @@ std::map<std::string, double> wallet;
 int main() {
     std::cout << "Currency Wallet API" << std::endl;
 
-    // Test database init
-    if (!initDatabase()) {
-        std::cerr << "Failed to initialize database" << std::endl;
-        return 1;
-    }
-
-    // Load wallet from database
-    if (!loadWalletFromDB(wallet)) {
-        std::cerr << "Failed to load wallet from database" << std::endl;
-        return 1;
-    }
+    testDatabaseOperations();    
     
     httplib::Server srv;
     

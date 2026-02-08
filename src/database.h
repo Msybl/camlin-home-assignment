@@ -10,4 +10,12 @@ bool initDatabase();
 // Load wallet from database
 bool loadWalletFromDB(std::map<std::string, double>& wallet);
 
+// Save a currency to database
+bool saveCurrencyToDB(const std::string& currency, double amount);
+
+// Delete a currency from database
+bool deleteCurrencyFromDB(const std::string& currency);
+
+void testDatabaseOperations();
+
 #endif // DATABASE_H
