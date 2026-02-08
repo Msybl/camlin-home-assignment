@@ -19,6 +19,12 @@ int main() {
         std::cerr << "Failed to initialize database" << std::endl;
         return 1;
     }
+
+    // Load wallet from database
+    if (!loadWalletFromDB(wallet)) {
+        std::cerr << "Failed to load wallet from database" << std::endl;
+        return 1;
+    }
     
     httplib::Server srv;
     
