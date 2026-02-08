@@ -97,11 +97,6 @@ int main() {
         res.set_content("{\"status\":\"ok\",\"message\":\"Currency Wallet API\"}", "application/json");
     });
     
-    // 404 handler
-    srv.set_error_handler([](const httplib::Request&, httplib::Response& res) {
-        res.set_content("{\"error\":\"Not Found\"}", "application/json");
-    });
-
     // POST /wallet/add endpoint
     srv.Post("/wallet/add", [](const httplib::Request& req, httplib::Response& res) {
         std::cout << "POST /wallet/add" << std::endl;
@@ -133,11 +128,11 @@ int main() {
         std::string currency = req_data["currency"];
         double amount = req_data["amount"];
 
-        // Check if amount is positive
-        if(amount < 0) {
+        // Check if amount is bigger than 0
+        if(amount <= 0) {
             res.status = 400;
             json error_response;
-            error_response["error"] = "Amount must be positive";
+            error_response["error"] = "Amount must be bigger than 0";
             error_response["received"] = amount;
             res.set_content(error_response.dump(2), "application/json");
             return;
@@ -198,11 +193,11 @@ int main() {
         std::string currency = req_data["currency"];
         double amount = req_data["amount"];
 
-        // Check if amount is positive
-        if(amount < 0) {
+        // Check if amount is bigger than 0
+        if(amount <= 0) {
             res.status = 400;
             json error_response;
-            error_response["error"] = "Amount must be positive";
+            error_response["error"] = "Amount must be bigger than 0";
             error_response["received"] = amount;
             res.set_content(error_response.dump(2), "application/json");
             return;
