@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra
 LDFLAGS = -lpthread -lcurl -lsqlite3
 TARGET = wallet_api
 SRC_DIR = src
-SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/nbp_client.cpp $(SRC_DIR)/database.cpp $(SRC_DIR)/utils.cpp
+SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/nbp_client.cpp $(SRC_DIR)/database.cpp $(SRC_DIR)/utils.cpp $(SRC_DIR)/auth.cpp
 
 all: $(TARGET)
 
@@ -48,6 +48,7 @@ test: $(TARGET)
 	# Add EUR to wallet
 	@echo "POST /wallet/add 75 EUR"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"EUR","amount":75}' || true
 	@echo ""
@@ -56,6 +57,7 @@ test: $(TARGET)
 	# Add USD to wallet
 	@echo "POST /wallet/add 100 USD"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD","amount":100}' || true
 	@echo ""
@@ -64,6 +66,7 @@ test: $(TARGET)
 	# Subtract from wallet
 	@echo "POST /wallet/sub 30 USD"
 	@curl -s -X POST http://localhost:8080/wallet/sub \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD","amount":30}' || true
 	@echo ""
@@ -71,7 +74,18 @@ test: $(TARGET)
 	
 	# Get wallet PLN values (with NBP rates)
 	@echo "GET /wallet"
-	@curl -s http://localhost:8080/wallet || true
+	@curl -s -H "X-API-Key: key-123" http://localhost:8080/wallet || true
+	@echo ""
+	@echo ""
+
+	@echo "========================================="
+	@echo "  AUTHENTICATION TESTS"
+	@echo "========================================="
+	@echo ""
+	
+	# Valid API key
+	@echo "Valid API key (200)"
+	@curl -s -H "X-API-Key: key-123" http://localhost:8080/wallet || true
 	@echo ""
 	@echo ""
 
@@ -83,6 +97,7 @@ test: $(TARGET)
 	# Invalid JSON 
 	@echo "Invalid JSON (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{invalid json}' || true
 	@echo ""
@@ -91,6 +106,7 @@ test: $(TARGET)
 	# Missing field
 	@echo "Missing 'amount' field (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD"}' || true
 	@echo ""
@@ -99,6 +115,7 @@ test: $(TARGET)
 	# Negative amount
 	@echo "Negative amount (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD","amount":-100}' || true
 	@echo ""
@@ -107,6 +124,7 @@ test: $(TARGET)
 	# Zero amount
 	@echo "Zero amount (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD","amount":0}' || true
 	@echo ""
@@ -115,6 +133,7 @@ test: $(TARGET)
 	# Short currency code
 	@echo "Short currency code (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"US","amount":100}' || true
 	@echo ""
@@ -123,6 +142,7 @@ test: $(TARGET)
 	# Long currency code
 	@echo "Long currency code (400)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USDD","amount":100}' || true
 	@echo ""
@@ -131,6 +151,7 @@ test: $(TARGET)
 	# Lowercase currency code
 	@echo "Lowercase currency code (should be converted to uppercase)"
 	@curl -s -X POST http://localhost:8080/wallet/add \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"gbp","amount":50}' || true
 	@echo ""
@@ -139,8 +160,21 @@ test: $(TARGET)
 	# Not enough funds
 	@echo "Not enough funds (400)"
 	@curl -s -X POST http://localhost:8080/wallet/sub \
+		-H "X-API-Key: key-123" \
 		-H "Content-Type: application/json" \
 		-d '{"currency":"USD","amount":999999}' || true
+	@echo ""
+	@echo ""
+
+	# Missing API key
+	@echo "Missing API key (401)"
+	@curl -s http://localhost:8080/wallet || true
+	@echo ""
+	@echo ""
+	
+	# Invalid API key
+	@echo "Invalid API key (401)"
+	@curl -s -H "X-API-Key: invalid-key" http://localhost:8080/wallet || true
 	@echo ""
 	@echo ""
 

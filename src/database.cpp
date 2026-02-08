@@ -18,8 +18,10 @@ bool initDatabase() {
     // Create SQL table
     const char* sql = 
         "CREATE TABLE IF NOT EXISTS wallet ("
-        "    currency_code TEXT PRIMARY KEY,"
-        "    amount REAL NOT NULL"
+        "    user_id TEXT NOT NULL,"
+        "    currency_code TEXT NOT NULL,"
+        "    amount REAL NOT NULL,"
+        "    PRIMARY KEY (user_id, currency_code)"
         ");";
         
     // Execute SQL
@@ -37,7 +39,7 @@ bool initDatabase() {
     return true;
 }
 
-bool loadWalletFromDB(std::map<std::string, double>& wallet) {
+bool loadWalletFromDB(const std::string& user_id, std::map<std::string, double>& wallet) {
     sqlite3* db;
     sqlite3_stmt* stmt;
     
@@ -49,7 +51,7 @@ bool loadWalletFromDB(std::map<std::string, double>& wallet) {
     }
     
     // Prepare SELECT query
-    const char* sql = "SELECT currency_code, amount FROM wallet";
+    const char* sql = "SELECT currency_code, amount FROM wallet WHERE user_id = ?";
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
@@ -57,6 +59,9 @@ bool loadWalletFromDB(std::map<std::string, double>& wallet) {
         return false;
     }
     
+    // Add user_id
+    sqlite3_bind_text(stmt, 1, user_id.c_str(), -1, SQLITE_TRANSIENT);
+
     wallet.clear();
     
     // Go through results
@@ -64,18 +69,18 @@ bool loadWalletFromDB(std::map<std::string, double>& wallet) {
         std::string currency = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         double amount = sqlite3_column_double(stmt, 1);
         wallet[currency] = amount;
-        std::cout << "Loaded: " << currency << " = " << amount << std::endl;
+        std::cout << "Loaded for " << user_id << ": " << currency << " = " << amount << std::endl;
     }
     
     // Clean
     sqlite3_finalize(stmt);
     sqlite3_close(db);
     
-    std::cout << "Loaded " << wallet.size() << " currencies from database" << std::endl;
+    std::cout << "Loaded " << wallet.size() << " currencies for user " << user_id << std::endl;
     return true;
 }
 
-bool saveCurrencyToDB(const std::string& currency, double amount) {
+bool saveCurrencyToDB(const std::string& user_id, const std::string& currency, double amount) {
     sqlite3* db;
     sqlite3_stmt* stmt;
     
@@ -86,8 +91,8 @@ bool saveCurrencyToDB(const std::string& currency, double amount) {
         return false;
     }
     
-    // Prepare SELECT query
-    const char* sql = "REPLACE INTO wallet (currency_code, amount) VALUES (?, ?)";
+    // Prepare query
+    const char* sql = "REPLACE INTO wallet (user_id, currency_code, amount) VALUES (?, ?, ?)";
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
@@ -96,8 +101,9 @@ bool saveCurrencyToDB(const std::string& currency, double amount) {
     }
     
     // Add parameters
-    sqlite3_bind_text(stmt, 1, currency.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_double(stmt, 2, amount);
+    sqlite3_bind_text(stmt, 1, user_id.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, currency.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 3, amount);
     
     // Execute
     rc = sqlite3_step(stmt);
@@ -112,11 +118,11 @@ bool saveCurrencyToDB(const std::string& currency, double amount) {
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
-    std::cout << "Saved to DB: " << currency << " = " << amount << std::endl;
+    std::cout << "Saved to DB for " << user_id << ": " << currency << " = " << amount << std::endl;
     return true;
 }
 
-bool deleteCurrencyFromDB(const std::string& currency) {
+bool deleteCurrencyFromDB(const std::string& user_id, const std::string& currency) {
     sqlite3* db;
     sqlite3_stmt* stmt;
     
@@ -128,7 +134,7 @@ bool deleteCurrencyFromDB(const std::string& currency) {
     }
     
     // Prepare DELETE query
-    const char* sql = "DELETE FROM wallet WHERE currency_code = ?";
+    const char* sql = "DELETE FROM wallet WHERE user_id = ? AND currency_code = ?";
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
@@ -137,7 +143,8 @@ bool deleteCurrencyFromDB(const std::string& currency) {
     }
     
     // Add parameter
-    sqlite3_bind_text(stmt, 1, currency.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, user_id.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, currency.c_str(), -1, SQLITE_TRANSIENT);
     
     // Execute
     rc = sqlite3_step(stmt);
@@ -152,59 +159,6 @@ bool deleteCurrencyFromDB(const std::string& currency) {
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
-    std::cout << "Deleted from DB: " << currency << std::endl;
+    std::cout << "Deleted from DB for " << user_id << ": " << currency << std::endl;
     return true;
-}
-
-void testDatabaseOperations() {
-    std::map<std::string, double> test_wallet;
-
-    if (!initDatabase()) {
-        std::cerr << "Failed to initialize database" << std::endl;
-        return;
-    }
-
-    if (!loadWalletFromDB(test_wallet)) {
-        std::cerr << "Failed to load wallet from database" << std::endl;
-        return;
-    }
-
-    if (!saveCurrencyToDB("USD", 100.0)) {
-        std::cerr << "Failed to save to database" << std::endl;
-    }
-
-    // Test save to database 
-    if (!saveCurrencyToDB("EUR", 75.0)) {
-        std::cerr << "Failed to save to database" << std::endl;
-    }
-
-    if (!loadWalletFromDB(test_wallet)) {
-        std::cerr << "Failed to load wallet from database" << std::endl;
-        return;
-    }
-    std::cout << "USD: " << test_wallet["USD"] << std::endl;
-    std::cout << "EUR: " << test_wallet["EUR"] << std::endl;
-
-    if (!saveCurrencyToDB("USD", 150.0)) {
-        std::cerr << "Failed to save to database" << std::endl;
-    }
-
-    if (!loadWalletFromDB(test_wallet)) {
-        std::cerr << "Failed to load wallet from database" << std::endl;
-        return;
-    }
-    std::cout << "USD: " << test_wallet["USD"] << std::endl;
-    std::cout << "EUR: " << test_wallet["EUR"] << std::endl;
-
-    if (!deleteCurrencyFromDB("EUR")) {
-        std::cerr << "Failed to delete" << std::endl;
-        return;
-    }
-
-    if (!loadWalletFromDB(test_wallet)) {
-        std::cerr << "Failed to load wallet from database" << std::endl;
-        return;
-    }
-    std::cout << "USD: " << test_wallet["USD"] << std::endl;
-    std::cout << "EUR: " << test_wallet["EUR"] << std::endl;
 }
