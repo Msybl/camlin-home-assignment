@@ -214,12 +214,29 @@ int main() {
     // GET /wallet endpoint
     srv.Get("/wallet", [](const httplib::Request&, httplib::Response& res) {
         std::cout << "GET /wallet" << std::endl;
+
+        // Fetch all NBP Table C rates at once
+        std::map<std::string, double> nbp_rates = fetchAllNBPRates();
+        if (nbp_rates.empty()) {
+            res.status = 500;
+            json error_response;
+            error_response["error"] = "Failed to fetch exchange rates from NBP";
+            res.set_content(error_response.dump(2), "application/json");
+            return;
+        }
         
         json wallet_array = json::array();
         double total_pln = 0.0;
 
         for(auto& [currency, amount] : wallet) {
-            double rate = fetchNBPRate(currency);
+            // Check if rate exists for this currency
+            if (nbp_rates.find(currency) == nbp_rates.end()) {
+                std::cerr << "No NBP rate found: " << currency << std::endl;
+                // Skip currencies that are not in NBP Table C
+                continue;  
+            }
+
+            double rate = nbp_rates[currency];
             double pln_value = amount * rate;
             total_pln += pln_value;
             
