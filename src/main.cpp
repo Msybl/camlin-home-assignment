@@ -186,6 +186,9 @@ int main() {
 
         wallet[currency] -= amount;
 
+        // Save the new amount
+        double new_amount = wallet[currency];
+
         // Delete if zero (or close to zero due to double type amount)
         if (wallet[currency] <= 0.01) {
             wallet.erase(currency);
@@ -203,7 +206,7 @@ int main() {
         response["message"] = "Currency subsracted";
         response["currency"] = currency;
         response["amount"] = roundTo2Decimals(amount);
-        response["total"] = roundTo2Decimals(wallet[currency]);
+        response["total"] = roundTo2Decimals(new_amount);
 
         res.set_content(response.dump(2), "application/json");
     });
