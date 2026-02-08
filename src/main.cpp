@@ -11,6 +11,10 @@ using json = nlohmann::json;
 
 std::map<std::string, double> wallet;
 
+double roundTo2Decimals(double value) {
+    return std::round(value * 100.0) / 100.0;
+}
+
 // Callback function for libcurl to write data
 static size_t WriteCallback(char* data, size_t size, size_t nmemb, std::string* response_data)
 {
@@ -72,7 +76,7 @@ double fetchNBPRate(const std::string& currency) {
         json nbp_response = json::parse(response_data);
         double rate = nbp_response["rates"][0]["mid"];
         
-        std::cout << "Fetched rate for " << currency << ": " << rate << " PLN" << std::endl;
+        std::cout << "Fetched rate for " << currency << ": " << roundTo2Decimals(rate) << " PLN" << std::endl;
         return rate;
         
     } catch (const json::exception& e) {
@@ -80,6 +84,7 @@ double fetchNBPRate(const std::string& currency) {
         return -1.0;
     }
 }
+
 
 
 int main() {
@@ -156,8 +161,8 @@ int main() {
         json response;
         response["message"] = "Currency added";
         response["currency"] = currency;
-        response["amount"] = amount;
-        response["total"] = wallet[currency];
+        response["amount"] = roundTo2Decimals(amount);
+        response["total"] = roundTo2Decimals(wallet[currency]);
 
         res.set_content(response.dump(2), "application/json");
     });
@@ -243,8 +248,8 @@ int main() {
         json response;
         response["message"] = "Currency subsracted";
         response["currency"] = currency;
-        response["amount"] = amount;
-        response["total"] = wallet[currency];
+        response["amount"] = roundTo2Decimals(amount);
+        response["total"] = roundTo2Decimals(wallet[currency]);
 
         res.set_content(response.dump(2), "application/json");
     });
@@ -263,16 +268,16 @@ int main() {
             
             json item;
             item["currency"] = currency;
-            item["amount"] = amount;
-            item["rate"] = rate;
-            item["pln_value"] = pln_value;
+            item["amount"] = roundTo2Decimals(amount);
+            item["rate"] = roundTo2Decimals(rate);
+            item["pln_value"] = roundTo2Decimals(pln_value);
             
             wallet_array.push_back(item);
         }
 
         json response;
         response["wallet"] = wallet_array;
-        response["total_pln"] = total_pln;
+        response["total_pln"] = roundTo2Decimals(total_pln);
         res.set_content(response.dump(2), "application/json");
     });
 
