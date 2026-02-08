@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
-LDFLAGS = -lpthread
+LDFLAGS = -lpthread -lcurl
 TARGET = wallet_api
 SRC_DIR = src
 SOURCES = $(SRC_DIR)/main.cpp
