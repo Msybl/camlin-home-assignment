@@ -14,8 +14,18 @@ std::map<std::string, double> wallet;
 int main() {
     std::cout << "Currency Wallet API" << std::endl;
 
-    testDatabaseOperations();    
+    // Initialize database
+    if (!initDatabase()) {
+        std::cerr << "Failed to initialize database" << std::endl;
+        return 1;
+    }
     
+    // Load wallet from database
+    if (!loadWalletFromDB(wallet)) {
+        std::cerr << "Failed to load wallet from database" << std::endl;
+        return 1;
+    }
+
     httplib::Server srv;
     
     // GET /health endpoint
@@ -83,6 +93,11 @@ int main() {
         std::transform(currency.begin(), currency.end(), currency.begin(), ::toupper);
 
         wallet[currency] += amount;
+
+        // Save to database
+        if (!saveCurrencyToDB(currency, wallet[currency])) {
+            std::cerr << "Failed to save to database" << std::endl;
+        }
 
         json response;
         response["message"] = "Currency added";
@@ -170,6 +185,19 @@ int main() {
         }
 
         wallet[currency] -= amount;
+
+        // Delete if zero (or close to zero due to double type amount)
+        if (wallet[currency] <= 0.01) {
+            wallet.erase(currency);
+            if (!deleteCurrencyFromDB(currency)) {
+                std::cerr << "Failed to delete from database" << std::endl;
+            }
+        } else {
+            // Save updated amount
+            if (!saveCurrencyToDB(currency, wallet[currency])) {
+                std::cerr << "Failed to save to database" << std::endl;
+            }
+        }
 
         json response;
         response["message"] = "Currency subsracted";
