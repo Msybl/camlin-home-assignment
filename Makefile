@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra
 LDFLAGS = -lpthread -lcurl -lsqlite3
 TARGET = wallet_api
 SRC_DIR = src
-SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/nbp_client.cpp $(SRC_DIR)/database.cpp
+SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/nbp_client.cpp $(SRC_DIR)/database.cpp $(SRC_DIR)/utils.cpp
 
 all: $(TARGET)
 

@@ -1,6 +1,7 @@
 #include "nbp_client.h"
 #include <curl/curl.h>
 #include <iostream>
+#include "utils.h"
 
 // Callback function for libcurl to write data
 static size_t WriteCallback(char* data, size_t size, size_t nmemb, std::string* response_data)
@@ -63,7 +64,7 @@ double fetchNBPRate(const std::string& currency) {
         json nbp_response = json::parse(response_data);
         double rate = nbp_response["rates"][0]["mid"];
         
-        std::cout << "Fetched rate for " << currency << ": " << rate << " PLN" << std::endl;
+        std::cout << "Fetched rate for " << currency << ": " << roundTo2Decimals(rate) << " PLN" << std::endl;
         return rate;
         
     } catch (const json::exception& e) {

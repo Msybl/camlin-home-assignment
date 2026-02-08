@@ -7,13 +7,9 @@
 #include <cctype>
 #include "nbp_client.h"
 #include "database.h"
+#include "utils.h"
 
 std::map<std::string, double> wallet;
-
-double roundTo2Decimals(double value) {
-    return std::round(value * 100.0) / 100.0;
-}
-
 
 int main() {
     std::cout << "Currency Wallet API" << std::endl;
