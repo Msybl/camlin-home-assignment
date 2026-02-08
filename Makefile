@@ -1,9 +1,9 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
-LDFLAGS = -lpthread -lcurl
+LDFLAGS = -lpthread -lcurl -lsqlite3
 TARGET = wallet_api
 SRC_DIR = src
-SOURCES = $(SRC_DIR)/main.cpp
+SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/nbp_client.cpp $(SRC_DIR)/database.cpp
 
 all: $(TARGET)
 
@@ -37,12 +37,6 @@ test: $(TARGET)
 	# Test root endpoint
 	@echo "GET /"
 	@curl -s http://localhost:8080/ || true
-	@echo ""
-	@echo ""
-
-	# Test error 
-	@echo "GET /nonexistent (404)"
-	@curl -s http://localhost:8080/nonexistent || true
 	@echo ""
 	@echo ""
 	

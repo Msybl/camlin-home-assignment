@@ -3,3 +3,8 @@ wallet_api
 
 # temporary
 .server.pid
+
+# DB files
+*.db
+wallet.db
+data/*.db
