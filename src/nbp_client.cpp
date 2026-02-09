@@ -3,6 +3,8 @@
 #include <iostream>
 #include "utils.h"
 
+static NBPRateCache global_cache;
+
 // Callback function for libcurl to write data
 static size_t WriteCallback(char* data, size_t size, size_t nmemb, std::string* response_data)
 {
@@ -73,7 +75,9 @@ double fetchNBPRate(const std::string& currency) {
     }
 }
 
-std::map<std::string, double> fetchAllNBPRates() {
+// Internal function to fetch NBP rates from Table C which contains "Ask" rates 
+// (without cache)
+static std::map<std::string, double> fetchNBPRates() {
     std::map<std::string, double> rates;
     
     // Use NBP Table C endpoint for "Ask" prices
@@ -138,4 +142,37 @@ std::map<std::string, double> fetchAllNBPRates() {
     }
     
     return rates;
+}
+
+bool NBPRateCache::isExpired() const {
+    return (time(nullptr) - last_updated > cache_duration_sec) ? true : false;
+}
+
+std::map<std::string, double> fetchAllNBPRates() {
+    // Check if cache is still valid
+    if (!global_cache.isExpired() && !global_cache.rates.empty()) {
+        time_t age = time(nullptr) - global_cache.last_updated;
+        std::cout << "Using cached NBP rates. Age: " << age << " seconds" << std::endl;
+        return global_cache.rates;
+    }
+    std::cout << "Cache expired or empty. Fetching fresh NBP rates" << std::endl;
+
+    std::map<std::string, double> fresh_rates = fetchNBPRates();
+    
+    if (!fresh_rates.empty()) {
+        // Update cache
+        global_cache.rates = fresh_rates;
+        global_cache.last_updated = time(nullptr);
+        std::cout << "Cache updated successfully" << std::endl;
+    } else {
+        std::cerr << "Failed to fetch fresh rates" << std::endl;
+        if (!global_cache.rates.empty()) {
+            std::cerr << "Using old cache" << std::endl;
+            return global_cache.rates;
+        } else {
+            std::cerr << "No cache available" << std::endl;
+        }
+    }
+    
+    return fresh_rates;
 }
