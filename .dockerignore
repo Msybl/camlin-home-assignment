@@ -1,0 +1,7 @@
+wallet_api
+
+*.db
+data/
+
+.git/
+.vscode/
